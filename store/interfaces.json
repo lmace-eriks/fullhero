@@ -1,0 +1,6 @@
+{
+  "fullhero": {
+    "component": "FullHero",
+    "composition": "children"
+  }
+}

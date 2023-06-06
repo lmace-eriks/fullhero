@@ -1,6 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-// import { createPortal } from "react-dom";
-// import { canUseDOM } from "vtex.render-runtime";
 
 import styles from "./styles.css";
 
@@ -32,7 +30,7 @@ const FullHero: StorefrontFunctionComponent<FullHeroProps> = ({ titleTag, titleT
   const mSize = useRef<imageSize>();
 
   const defaultTag = "div";
-  const CustomTag: any = !titleTag ? `${defaultTag}` : `${titleTag}`;
+  const CustomTag: any = !titleTag ? `${defaultTag}` : `${titleTag.toLowerCase()}`;
 
   useEffect(() => {
     if (!openGate.current) return;
@@ -78,6 +76,26 @@ FullHero.schema = {
   title: "Full Hero",
   type: "object",
   properties: {
+    desktopImage: {
+      title: "Desktop Image Source",
+      type: "string",
+      widget: { "ui:widget": "image-uploader" }
+    },
+    desktopSize: {
+      title: "Desktop Image Size",
+      description: "REQUIRED | Width space Height. Desktop and Mobile must have identical aspect ratios. Example: 1680 510",
+      type: "string"
+    },
+    mobileImage: {
+      title: "Mobile Image Source",
+      type: "string",
+      widget: { "ui:widget": "image-uploader" }
+    },
+    mobileSize: {
+      title: "Mobile Image Size",
+      description: "REQUIRED | Width space Height. Desktop and Mobile must have identical aspect ratios. Example: 450 137",
+      type: "string"
+    },
     titleTag: {
       title: "Title Tag",
       description: "h1, h2... Will default to div if blank.",
@@ -116,26 +134,6 @@ FullHero.schema = {
     maxHeight: {
       title: "Maximum Height of Image",
       description: "CSS Value for max-height. Example: 60vh",
-      type: "string"
-    },
-    desktopImage: {
-      title: "Desktop Image Source",
-      description: "Absolute Path",
-      type: "string"
-    },
-    mobileImage: {
-      title: "Mobile Image Source",
-      description: "Absolute Path",
-      type: "string"
-    },
-    desktopSize: {
-      title: "Desktop Image Size",
-      description: "Width space Height. Desktop and Mobile must have identical aspect ratios. Example: 1680 510",
-      type: "string"
-    },
-    mobileSize: {
-      title: "Mobile Image Size",
-      description: "Width space Height. Desktop and Mobile must have identical aspect ratios. Example: 450 137",
       type: "string"
     }
   }

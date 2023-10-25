@@ -36,6 +36,17 @@ const FullHero: StorefrontFunctionComponent<FullHeroProps> = ({ titleTag, titleT
     if (!openGate.current) return;
     openGate.current = false;
 
+    setSizes();
+
+    setloading(false);
+  })
+
+  const setSizes = () => {
+    // desktopSize and mobileSize are strings of pixel
+    // width and height formatted for example as:
+    // 450 116
+    // This separates the values into separate numbers. - LM
+
     dSize.current = {
       width: Number(desktopSize.split(" ")[0]),
       height: Number(desktopSize.split(" ")[1])
@@ -45,9 +56,7 @@ const FullHero: StorefrontFunctionComponent<FullHeroProps> = ({ titleTag, titleT
       width: Number(mobileSize.split(" ")[0]),
       height: Number(mobileSize.split(" ")[1])
     }
-
-    setloading(false);
-  })
+  }
 
   const ValidHero = () => (
     <div className={`${styles.container}--${blockClass}`}>
@@ -58,6 +67,8 @@ const FullHero: StorefrontFunctionComponent<FullHeroProps> = ({ titleTag, titleT
       </div>
       <img
         src={mobileImage}
+        // @ts-expect-error
+        fetchPriority={"high"}
         alt={altText}
         srcSet={`${desktopImage} ${dSize.current?.width}w, ${mobileImage} ${mSize.current?.width}w`}
         sizes={`(min-width:1026px) ${dSize.current?.width}px, ${mSize.current?.width}px`}
@@ -69,7 +80,11 @@ const FullHero: StorefrontFunctionComponent<FullHeroProps> = ({ titleTag, titleT
     </div>
   )
 
-  return loading ? <></> : <ValidHero />;
+  return loading ? <></> : (!ctaText && ctaLink) ?
+    <a href={ctaLink} target={newTab ? "_blank" : ""}>
+      <ValidHero />
+    </a> :
+    <ValidHero />;
 }
 
 FullHero.schema = {
@@ -128,7 +143,6 @@ FullHero.schema = {
     },
     altText: {
       title: "Alt Text",
-      // description: "Relative or Absolute Path",
       type: "string"
     },
     maxHeight: {

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { canUseDOM } from "vtex.render-runtime";
 
 import styles from "./styles.css";
 
@@ -10,6 +11,7 @@ interface FullHeroProps {
   ctaLink: string
   newTab: boolean
   altText: string
+  lazyLoading: boolean
   desktopImage: string
   mobileImage: string
   desktopSize: string
@@ -18,45 +20,49 @@ interface FullHeroProps {
   blockClass: string
 }
 
-interface imageSize {
+interface ImageSize {
   width: number
   height: number
 }
 
-const FullHero: StorefrontFunctionComponent<FullHeroProps> = ({ titleTag, titleText, subtitleText, ctaText, ctaLink, newTab, altText, desktopImage, mobileImage, desktopSize, mobileSize, maxHeight, blockClass }) => {
+const blankImageSize: ImageSize = {
+  width: 0,
+  height: 0
+}
+
+const FullHero: StorefrontFunctionComponent<FullHeroProps> = ({ lazyLoading, titleTag, titleText, subtitleText, ctaText, ctaLink, newTab, altText, desktopImage, mobileImage, desktopSize, mobileSize, maxHeight, blockClass }) => {
   const openGate = useRef(true);
   const [loading, setloading] = useState(true);
-  const dSize = useRef<imageSize>();
-  const mSize = useRef<imageSize>();
+  const [device, setDevice] = useState<"desktop" | "mobile">("mobile");
+  const [deviceWidth, setDeviceWidth] = useState(0);
+  const [dSize, setDSize] = useState<ImageSize>(blankImageSize);
+  const [mSize, setMSize] = useState<ImageSize>(blankImageSize);
 
   const defaultTag = "div";
   const CustomTag: any = !titleTag ? `${defaultTag}` : `${titleTag.toLowerCase()}`;
 
   useEffect(() => {
-    if (!openGate.current) return;
+    if (!openGate.current || !canUseDOM) return;
     openGate.current = false;
 
-    setSizes();
+    const windowWidth = window.innerWidth;
+    setDeviceWidth(windowWidth);
+    setDevice(windowWidth >= 1026 ? "desktop" : "mobile");
 
-    setloading(false);
-  })
-
-  const setSizes = () => {
-    // desktopSize and mobileSize are strings of pixel
-    // width and height formatted for example as:
-    // 450 116
+    // desktopSize and mobileSize are strings of pixel width and height formatted for example as: 450 116
     // This separates the values into separate numbers. - LM
-
-    dSize.current = {
+    setDSize({
       width: Number(desktopSize.split(" ")[0]),
       height: Number(desktopSize.split(" ")[1])
-    }
+    });
 
-    mSize.current = {
+    setMSize({
       width: Number(mobileSize.split(" ")[0]),
       height: Number(mobileSize.split(" ")[1])
-    }
-  }
+    });
+
+    setloading(false);
+  });
 
   const ValidHero = () => (
     <div className={`${styles.container}--${blockClass}`}>
@@ -65,18 +71,21 @@ const FullHero: StorefrontFunctionComponent<FullHeroProps> = ({ titleTag, titleT
         {subtitleText && <div className={`${styles.subtitleText}--${blockClass}`}>{subtitleText}</div>}
         {ctaText && <a href={ctaLink} target={newTab ? "_blank" : ""} className={`${styles.cta}--${blockClass}`}>{ctaText}</a>}
       </div>
-      <img
-        src={mobileImage}
-        // @ts-expect-error
-        fetchPriority={"high"}
-        alt={altText}
-        srcSet={`${desktopImage} ${dSize.current?.width}w, ${mobileImage} ${mSize.current?.width}w`}
-        sizes={`(min-width:1026px) ${dSize.current?.width}px, ${mSize.current?.width}px`}
-        width={dSize.current?.width}
-        height={dSize.current?.height}
-        style={{ maxHeight: maxHeight ? maxHeight : "" }} // CLS Strategy - LM
-        className={`${styles.image}--${blockClass}`}
-      />
+      <picture>
+        {/* @ts-expect-error */}
+        <source media="(min-width:1026px)" srcSet={desktopImage} width={dSize.width} height={dSize.height} />
+        {/* @ts-expect-error */}
+        <source media="(max-width:1025px)" srcSet={mobileImage} width={mSize.width} height={mSize.height} />
+        <img
+          src={mobileImage}
+          alt={altText || titleText}
+          loading={lazyLoading ? "lazy" : "eager"}
+          width={device === "desktop" ? dSize.width : mSize.width}
+          height={device === "desktop" ? dSize.height : mSize.height}
+          style={{ maxHeight: maxHeight ? maxHeight : "" }} // CLS Strategy - LM
+          className={`${styles.image}--${blockClass}`}
+        />
+      </picture>
     </div>
   )
 
@@ -135,6 +144,11 @@ FullHero.schema = {
       title: "Button / CTA Link",
       description: "Relative or Absolute Path",
       type: "string"
+    },
+    lazyLoading: {
+      title: "Lazy Loading?",
+      description: "If turned on, this image will not load until the user scrolls it into view. Leave off for the first big image on screen.",
+      type: "boolean"
     },
     newTab: {
       title: "Open Link in New Tab?",
